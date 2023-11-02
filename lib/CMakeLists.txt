@@ -1,3 +1,5 @@
+# Got help from https://github.com/cross-rs/rust-cmake-hello-world
+
 cmake_minimum_required(VERSION 3.10)
 project(dx11)
 
