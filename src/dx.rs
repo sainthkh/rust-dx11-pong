@@ -70,8 +70,6 @@ pub struct TextureViewHandle {
 
 #[link(name = "dx11", kind = "static")]
 extern "C" {
-    fn dx_test() -> i32;
-    fn dx_set_pfn(cb: extern fn()) -> ();
     fn dx_init_d3d() -> ();
     fn dx_wnd_width() -> i32;
     fn dx_wnd_height() -> i32;
@@ -98,19 +96,7 @@ extern "C" {
     fn dx_get_transform(model_rotation: *const f32, model_scale: *const f32, model_translation: *const f32, data: *mut *mut f32) -> ();
 }
 
-pub fn test() {
-    unsafe {
-        dx_test();
-    }
-}
-
-pub fn set_pfn(cb: extern fn()) {
-    unsafe {
-        dx_set_pfn(cb);
-    }
-}
-
-pub fn to_utf16(s: &str) -> Vec<u16> {
+fn to_utf16(s: &str) -> Vec<u16> {
     let mut v: Vec<u16> = OsStr::new(s).encode_wide().collect();
 
     v.push(0);
@@ -147,14 +133,19 @@ pub fn create_vertex_shader(path: &str, entry_point: &str) -> VertexShaderHandle
 
 pub fn create_input_layout(input_element_desc: &[(&str, DxgiFormat)], vertex_shader: &VertexShaderHandle) -> InputLayoutHandle {
     let mut input_element_desc_internal: Vec<InputElementDescInternal> = Vec::new();
+    let mut names: Vec<CString> = Vec::new();
+    let mut i = 0;
 
     for desc in input_element_desc {
         let name = CString::new(desc.0).unwrap();
+        names.push(name.clone());
 
         input_element_desc_internal.push(InputElementDescInternal {
-            semantic_name: name.as_ptr() as *const c_char,
+            semantic_name: names[i].as_ptr() as *const c_char,
             format: desc.1 as u32,
         });
+
+        i = i + 1;
     }
 
     unsafe {
@@ -279,8 +270,6 @@ pub fn get_transform(model_rotation: &[f32; 3], model_scale: &[f32; 3], model_tr
     unsafe {
         dx_get_transform(model_rotation.as_ptr(), model_scale.as_ptr(), model_translation.as_ptr(), &mut data.as_mut_ptr());
     }
-
-    println!("{:?}", data);
 
     data
 }
